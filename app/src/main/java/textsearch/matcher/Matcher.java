@@ -6,35 +6,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RecursiveTask;
 
-public class Matcher extends RecursiveTask<Map<String, List<Integer>>> {
+import textsearch.ingestion.TextLine;
 
-    private List<String> inputText;
+public class Matcher extends RecursiveTask<Map<String, List<TextLineMatch>>> {
+
+    private List<TextLine> inputText;
     private List<String> matchText;
     private int start, end;
 
-    public Matcher(List<String> inputText, List<String> matchText, int start, int end) {
+    public Matcher(List<TextLine> inputText, List<String> matchText, int start, int end) {
         this.inputText = inputText;
         this.matchText = matchText;
         this.start = start;
         this.end = end;
     }
 
-    public Matcher(List<String> inputText, List<String> matchText) {
+    public Matcher(List<TextLine> inputText, List<String> matchText) {
         this.inputText = inputText;
         this.matchText = matchText;
         this.start = 0;
         this.end = inputText.size();
     }
 
-    public Map<String, List<Integer>> match(String inputLine) {
-        Map<String, List<Integer>> res = new HashMap<>();
+    public Map<String, List<TextLineMatch>> match(TextLine inputLine) {
+        Map<String, List<TextLineMatch>> res = new HashMap<>();
         matchText.forEach(t -> {
-            int index = inputLine.indexOf(t);
-            List<Integer> l = new ArrayList<Integer>();
+            // System.out.println(String.format("processing matcher for line offset %d",
+            // inputLine.getLineIndex()));
+            int index = inputLine.getContent().indexOf(t);
+            var l = new ArrayList<TextLineMatch>();
 
             while (index >= 0) {
-                l.add(index);
-                index = inputLine.indexOf(t, index + 1);
+                l.add(new TextLineMatch(inputLine.getLineIndex(), index));
+                index = inputLine.getContent().indexOf(t, index + 1);
             }
 
             res.put(t, l);
@@ -44,11 +48,8 @@ public class Matcher extends RecursiveTask<Map<String, List<Integer>>> {
     }
 
     @Override
-    protected Map<String, List<Integer>> compute() {
-        var res = new HashMap<String, List<Integer>>();
-
-        System.out.println(end);
-        System.out.println(start);
+    protected Map<String, List<TextLineMatch>> compute() {
+        var res = new HashMap<String, List<TextLineMatch>>();
 
         if (end - start <= 1) {
             return match(inputText.get(start));

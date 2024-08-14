@@ -3,13 +3,20 @@
  */
 package textsearch;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.Future;
 
+import textsearch.ingestion.Injestor;
+import textsearch.ingestion.TextLine;
 import textsearch.matcher.Matcher;
+import textsearch.matcher.TextLineMatch;
 
 public class App {
 
@@ -17,14 +24,42 @@ public class App {
 
         ForkJoinPool p = new ForkJoinPool(10);
 
-        Matcher m = new Matcher(
-                List.of("testing my concurrency", "concurrency model in java", "parallelism vs concurrency"),
-                List.of("concurrency"));
+        List<Future> matchFutures = new ArrayList<>();
 
-        Map<String, List<Integer>> result = p.invoke(m);
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new URI("http://norvig.com/big.txt").toURL().openStream()))) {
 
-        
+            boolean moreToRead = true;
+            int offset = 0;
+            int batchSize = 100;
 
-        System.out.println(result);
+            while (moreToRead) {
+                Injestor i = new Injestor(br, batchSize, offset);
+                ForkJoinTask<List<TextLine>> futureResult = p.submit(i);
+
+                offset += batchSize;
+
+                List<TextLine> result = futureResult.get();
+
+                if (result.isEmpty()) {
+                    moreToRead = false;
+                    break;
+                }
+
+                Matcher m = new Matcher(result, List.of("concurrence"));
+                ForkJoinTask<Map<String, List<TextLineMatch>>> future = p.submit(m);
+
+                matchFutures.add(future);
+
+                Map<String, List<TextLineMatch>> res = future.get();
+
+                System.out.println(res);
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
     }
 }
