@@ -13,6 +13,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 
+import textsearch.aggregator.Aggregator;
 import textsearch.ingestion.Injestor;
 import textsearch.ingestion.TextLine;
 import textsearch.matcher.Matcher;
@@ -22,44 +23,51 @@ public class App {
 
     public static void main(String[] args) {
 
-        ForkJoinPool p = new ForkJoinPool(10);
+        try (ForkJoinPool p = new ForkJoinPool(10)) {
 
-        List<Future> matchFutures = new ArrayList<>();
+            Aggregator aggregator = new Aggregator();
 
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(new URI("http://norvig.com/big.txt").toURL().openStream()))) {
+            List<Future> matchFutures = new ArrayList<>();
 
-            boolean moreToRead = true;
-            int offset = 0;
-            int batchSize = 100;
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(new URI("http://norvig.com/big.txt").toURL().openStream()))) {
 
-            while (moreToRead) {
-                Injestor i = new Injestor(br, batchSize, offset);
-                ForkJoinTask<List<TextLine>> futureResult = p.submit(i);
+                boolean moreToRead = true;
+                int offset = 0;
+                int batchSize = 100;
 
-                offset += batchSize;
+                while (moreToRead) {
+                    Injestor i = new Injestor(br, batchSize, offset);
+                    ForkJoinTask<List<TextLine>> futureResult = p.submit(i);
 
-                List<TextLine> result = futureResult.get();
+                    offset += batchSize;
 
-                if (result.isEmpty()) {
-                    moreToRead = false;
-                    break;
+                    List<TextLine> result = futureResult.get();
+
+                    if (result.isEmpty()) {
+                        moreToRead = false;
+                        break;
+                    }
+
+                    Matcher m = new Matcher(result, List.of("concurrence", "firelight"));
+                    ForkJoinTask<Map<String, List<TextLineMatch>>> future = p.submit(m);
+
+                    matchFutures.add(future);
+
+                    Map<String, List<TextLineMatch>> res = future.get();
+
+                    aggregator.aggregate(res);
+
+                    // System.out.println(res.get("concurrence"));
+
                 }
 
-                Matcher m = new Matcher(result, List.of("concurrence"));
-                ForkJoinTask<Map<String, List<TextLineMatch>>> future = p.submit(m);
-
-                matchFutures.add(future);
-
-                Map<String, List<TextLineMatch>> res = future.get();
-
-                System.out.println(res);
-
+                System.out.println(aggregator.getAggregatedResult());
+                System.out.println(p.toString());
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-
         }
     }
 }
