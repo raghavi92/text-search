@@ -9,6 +9,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
@@ -21,8 +22,7 @@ import textsearch.matcher.TextLineMatch;
 
 public class App {
 
-    public static void main(String[] args) {
-
+    private Map<String, List<TextLineMatch>> processTextSearch(String fileURL, List<String> searchTexStrings) {
         try (ForkJoinPool p = new ForkJoinPool(10)) {
 
             Aggregator aggregator = new Aggregator();
@@ -30,7 +30,7 @@ public class App {
             List<Future> matchFutures = new ArrayList<>();
 
             try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(new URI("http://norvig.com/big.txt").toURL().openStream()))) {
+                    new InputStreamReader(new URI(fileURL).toURL().openStream()))) {
 
                 boolean moreToRead = true;
                 int offset = 0;
@@ -49,25 +49,36 @@ public class App {
                         break;
                     }
 
-                    Matcher m = new Matcher(result, List.of("concurrence", "firelight"));
+                    Matcher m = new Matcher(result, searchTexStrings);
                     ForkJoinTask<Map<String, List<TextLineMatch>>> future = p.submit(m);
 
                     matchFutures.add(future);
 
-                    Map<String, List<TextLineMatch>> res = future.get();
-
-                    aggregator.aggregate(res);
-
-                    // System.out.println(res.get("concurrence"));
+                    p.submit(() -> {
+                        try {
+                            aggregator.aggregate(future.get());
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    });
 
                 }
-
-                System.out.println(aggregator.getAggregatedResult());
-                System.out.println(p.toString());
             }
+
+            return aggregator.getAggregatedResult();
 
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
+
+    public static void main(String[] args) {
+        App app = new App();
+
+        var res = app.processTextSearch("https://norvig.com/big.txt", List.of("concurrence"));
+
+        System.out.println(res);
+    }
+
 }
