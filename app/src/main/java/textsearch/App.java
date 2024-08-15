@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import textsearch.aggregator.Aggregator;
 import textsearch.ingestion.Injestor;
@@ -27,7 +28,7 @@ public class App {
 
             Aggregator aggregator = new Aggregator();
 
-            List<Future> matchFutures = new ArrayList<>();
+            var matchFutures = new ArrayList<Future<Map<String, List<TextLineMatch>>>>();
 
             try (BufferedReader br = new BufferedReader(
                     new InputStreamReader(new URI(fileURL).toURL().openStream()))) {
@@ -50,7 +51,7 @@ public class App {
                     }
 
                     Matcher m = new Matcher(result, searchTexStrings);
-                    ForkJoinTask<Map<String, List<TextLineMatch>>> future = p.submit(m);
+                    var future = p.submit(m);
 
                     matchFutures.add(future);
 
@@ -63,8 +64,11 @@ public class App {
                     });
 
                 }
-            }
+                p.shutdown();
 
+                p.awaitTermination(15, TimeUnit.MINUTES);
+
+            }
             return aggregator.getAggregatedResult();
 
         } catch (Exception e) {
