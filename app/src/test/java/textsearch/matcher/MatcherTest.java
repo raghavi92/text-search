@@ -1,5 +1,7 @@
 package textsearch.matcher;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
@@ -27,6 +29,14 @@ public class MatcherTest {
 
         assertEquals(m.get("tom").size(), 2);
         assertEquals(m.get("how").size(), 2);
+
+        assertThat(m.get("tom"), containsInAnyOrder(
+                new TextLineMatch(0, 6),
+                new TextLineMatch(1, 12)));
+
+        assertThat(m.get("how"), containsInAnyOrder(
+                new TextLineMatch(1, 0),
+                new TextLineMatch(2, 0)));
 
     }
 }
