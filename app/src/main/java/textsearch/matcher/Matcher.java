@@ -49,10 +49,14 @@ public class Matcher extends RecursiveTask<Map<String, List<TextLineMatch>>> {
 
     @Override
     protected Map<String, List<TextLineMatch>> compute() {
-        var res = new HashMap<String, List<TextLineMatch>>();
 
-        if (end - start <= 1) {
-            return match(inputText.get(start));
+        if (end - start <= 50) {
+            var resList = new ArrayList<Map<String, List<TextLineMatch>>>();
+            for (int i = start; i < end; i++) {
+                resList.add(match(inputText.get(i)));
+            }
+
+            return mergeMaps(resList);
         }
 
         int mid = (start + end) / 2;
@@ -67,19 +71,19 @@ public class Matcher extends RecursiveTask<Map<String, List<TextLineMatch>>> {
 
         var m2Output = m2.join();
 
-        mOutput.forEach((k, v) -> {
-            res.merge(k, v, (i, j) -> {
-                i.addAll(j);
-                return i;
-            });
-        });
+        return mergeMaps(List.of(mOutput, m2Output));
 
-        m2Output.forEach((k, v) -> {
-            res.merge(k, v, (i, j) -> {
-                i.addAll(j);
-                return i;
-            });
-        });
+    }
+
+    private Map<String, List<TextLineMatch>> mergeMaps(List<Map<String, List<TextLineMatch>>> m1) {
+        var res = new HashMap<String, List<TextLineMatch>>();
+
+        for (Map<String, List<TextLineMatch>> map : m1) {
+            map.forEach((key, value) -> res.merge(key, new ArrayList<>(value), (existingList, newList) -> {
+                existingList.addAll(newList);
+                return existingList;
+            }));
+        }
 
         return res;
 
