@@ -28,11 +28,9 @@ public class Matcher extends RecursiveTask<Map<String, List<TextLineMatch>>> {
         this.end = inputText.size();
     }
 
-    public Map<String, List<TextLineMatch>> match(TextLine inputLine) {
+    private Map<String, List<TextLineMatch>> match(TextLine inputLine) {
         Map<String, List<TextLineMatch>> res = new HashMap<>();
         matchText.forEach(t -> {
-            // System.out.println(String.format("processing matcher for line offset %d",
-            // inputLine.getLineIndex()));
             int index = inputLine.getContent().indexOf(t);
             var l = new ArrayList<TextLineMatch>();
 
