@@ -80,7 +80,17 @@ public class App {
     public static void main(String[] args) {
         App app = new App();
 
-        var res = app.processTextSearch("https://norvig.com/big.txt", List.of("concurrence"));
+        var res = app.processTextSearch("https://norvig.com/big.txt", List.of(
+                "James", "John", "Robert", "Michael", "William", "David", "Richard",
+                "Charles", "Joseph", "Thomas",
+                "Christopher", "Daniel", "Paul", "Mark", "Donald", "George", "Kenneth",
+                "Steven", "Edward", "Brian",
+                "Ronald", "Anthony", "Kevin", "Jason", "Matthew", "Gary", "Timothy", "Jose",
+                "Larry", "Jeffrey",
+                "Frank", "Scott", "Eric", "Stephen", "Andrew", "Raymond", "Gregory",
+                "Joshua", "Jerry", "Dennis",
+                "Walter", "Patrick", "Peter", "Harold", "Douglas", "Henry", "Carl", "Arthur",
+                "Ryan", "Roger"));
 
         System.out.println(res);
     }
