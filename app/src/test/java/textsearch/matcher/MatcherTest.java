@@ -14,8 +14,8 @@ import textsearch.ingestion.TextLine;
 
 public class MatcherTest {
         Matcher matcher = new Matcher(
-                        List.of(new TextLine(0, "hello tom"), new TextLine(1, "how are you tom?"),
-                                        new TextLine(2, "how are things?")),
+                        List.of(new TextLine(0, "hello tom", 0), new TextLine(1, "how are you tom?", 8),
+                                        new TextLine(2, "how are things?", 23)),
                         List.of("tom", "how"));
 
         @Test
@@ -31,12 +31,12 @@ public class MatcherTest {
                 assertEquals(m.get("how").size(), 2);
 
                 assertThat(m.get("tom"), containsInAnyOrder(
-                                new TextLineMatch(0, 6),
-                                new TextLineMatch(1, 12)));
+                                new TextLineMatch(0, 6, new TextLine(0, "hello tom", 0)),
+                                new TextLineMatch(1, 12, new TextLine(1, "how are you tom?", 8))));
 
                 assertThat(m.get("how"), containsInAnyOrder(
-                                new TextLineMatch(1, 0),
-                                new TextLineMatch(2, 0)));
+                                new TextLineMatch(1, 0, new TextLine(1, "how are you tom?", 8)),
+                                new TextLineMatch(2, 0, new TextLine(2, "how are things?", 23))));
 
         }
 }

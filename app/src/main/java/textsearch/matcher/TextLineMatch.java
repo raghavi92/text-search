@@ -1,17 +1,25 @@
 package textsearch.matcher;
 
+import textsearch.ingestion.TextLine;
+
 public class TextLineMatch {
     private final long lineOffset;
-    private final int charOffset;
+    private final int charOffsetFromBeginningOfLine;
+    private TextLine line;
 
-    public TextLineMatch(long lineOffset, int charOffset) {
+    public TextLineMatch(long lineOffset, int charOffsetFromBeginningOfLine, TextLine line) {
         this.lineOffset = lineOffset;
-        this.charOffset = charOffset;
+        this.charOffsetFromBeginningOfLine = charOffsetFromBeginningOfLine;
+        this.line = line;
     }
 
     @Override
     public String toString() {
-        return "[lineOffset=" + lineOffset + ", charOffset=" + charOffset + "]";
+        return "[lineOffset=" + lineOffset + ", charOffset=" + getCharOffsetFromBeginningOfTheBatch() + "]";
+    }
+
+    public long getCharOffsetFromBeginningOfTheBatch() {
+        return line.getCumulativeLengthInBatch() + charOffsetFromBeginningOfLine;
     }
 
     @Override
@@ -19,7 +27,7 @@ public class TextLineMatch {
         final int prime = 31;
         int result = 1;
         result = prime * result + (int) (lineOffset ^ (lineOffset >>> 32));
-        result = prime * result + charOffset;
+        result = prime * result + charOffsetFromBeginningOfLine;
         return result;
     }
 
@@ -34,8 +42,9 @@ public class TextLineMatch {
         TextLineMatch other = (TextLineMatch) obj;
         if (lineOffset != other.lineOffset)
             return false;
-        if (charOffset != other.charOffset)
+        if (charOffsetFromBeginningOfLine != other.charOffsetFromBeginningOfLine)
             return false;
         return true;
     }
+
 }

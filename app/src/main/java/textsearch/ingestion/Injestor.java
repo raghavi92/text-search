@@ -24,9 +24,13 @@ public class Injestor implements Callable<List<TextLine>> {
         String line;
         List<TextLine> lineList = new ArrayList<>();
 
+        long cumulativeLength = 0;
         while ((line = br.readLine()) != null && count <= batchSize) {
-            // System.out.println(String.format("reading line offset %d and line number %d", offset, count));
-            lineList.add(new TextLine(offset + count, line));
+            // System.out.println(String.format("reading line offset %d and line number %d",
+            // offset, count));
+
+            lineList.add(new TextLine(offset + count, line, cumulativeLength));
+            cumulativeLength += line.length();
             count++;
         }
         return lineList;

@@ -35,7 +35,7 @@ public class Matcher extends RecursiveTask<Map<String, List<TextLineMatch>>> {
             var l = new ArrayList<TextLineMatch>();
 
             while (index >= 0) {
-                l.add(new TextLineMatch(inputLine.getLineIndex(), index));
+                l.add(new TextLineMatch(inputLine.getLineIndex(), index, inputLine ));
                 index = inputLine.getContent().indexOf(t, index + 1);
             }
 
